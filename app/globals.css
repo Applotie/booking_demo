@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff6ed;
+  --color-brand-100: #ffead4;
+  --color-brand-200: #ffd0a8;
+  --color-brand-300: #ffae71;
+  --color-brand-400: #fd8038;
+  --color-brand-500: #f45f12;
+  --color-brand-600: #e04a08;
+  --color-brand-700: #b93509;
+  --color-brand-800: #932c10;
+  --color-brand-900: #772710;
+  --color-ink: #0f1b2d;
+  --font-sans: "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #f6f7f9;
+  color: var(--color-ink);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hatched fill used for blocked seats */
+.seat-blocked {
+  background-image: repeating-linear-gradient(135deg, #e2e8f0 0 4px, #f8fafc 4px 8px);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
