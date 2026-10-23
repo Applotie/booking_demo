@@ -11,11 +11,11 @@ import { inputClasses } from '@/components/ui/Field';
 import { Alert, EmptyState } from '@/components/ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
 import { getSeatAvailability, createHold, getHoldByToken, isHoldActive, tripUnavailableReason } from '@/lib/booking-service';
-import { resolveTrip, occurrenceId } from '@/lib/schedule-service';
+import { resolveTrip, occurrenceId, runsEveryDay, scheduleWeekdays, upcomingRunDates } from '@/lib/schedule-service';
 import { sortSeatIds } from '@/lib/seat-service';
 import { sessionGet, sessionSet, holdKey, flashKey } from '@/lib/session';
 import { dateKeyOf, todayKey } from '@/lib/dates';
-import { formatINR } from '@/lib/formatters';
+import { formatINR, formatDateLong, formatWeekdays } from '@/lib/formatters';
 import { MAX_SEATS_PER_BOOKING } from '@/lib/constants';
 
 export default function TripSeatsPage() {
@@ -126,17 +126,33 @@ export default function TripSeatsPage() {
       {schedule ? (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <Repeat size={16} className="text-brand-700" aria-hidden="true" /> This bus runs daily
+            <Repeat size={16} className="text-brand-700" aria-hidden="true" />
+            {runsEveryDay(schedule) ? 'This bus runs daily' : `This bus runs every ${formatWeekdays(scheduleWeekdays(schedule))}`}
           </span>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             Travel date
-            <input
-              type="date"
-              min={firstDate}
-              value={dateKeyOf(trip.departureAt)}
-              onChange={(e) => e.target.value >= firstDate && router.push(`/trips/${occurrenceId(schedule.id, e.target.value)}`)}
-              className={inputClasses(false, 'h-9 w-auto')}
-            />
+            {runsEveryDay(schedule) ? (
+              <input
+                type="date"
+                min={firstDate}
+                value={dateKeyOf(trip.departureAt)}
+                onChange={(e) => e.target.value >= firstDate && router.push(`/trips/${occurrenceId(schedule.id, e.target.value)}`)}
+                className={inputClasses(false, 'h-9 w-auto')}
+              />
+            ) : (
+              // Only the days it runs can be picked, so list them.
+              <select
+                value={dateKeyOf(trip.departureAt)}
+                onChange={(e) => router.push(`/trips/${occurrenceId(schedule.id, e.target.value)}`)}
+                className={inputClasses(false, 'h-9 w-auto pr-8')}
+              >
+                {[...new Set([dateKeyOf(trip.departureAt), ...upcomingRunDates(schedule, firstDate, 26)])].sort().map((d) => (
+                  <option key={d} value={d}>
+                    {formatDateLong(d)}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
         </div>
       ) : null}

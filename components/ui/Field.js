@@ -24,7 +24,7 @@ export function Field({ label, hint, error, required, children, className = '', 
       ) : null}
       {children}
       {error ? (
-        <p className="mt-1 text-xs font-medium text-red-600" role="alert">
+        <p className="mt-1 whitespace-pre-line text-xs font-medium text-red-600" role="alert">
           {error}
         </p>
       ) : hint ? (

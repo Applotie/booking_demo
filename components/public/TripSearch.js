@@ -147,7 +147,7 @@ export default function TripSearch() {
                 </h2>
                 <p className="text-sm text-slate-500">
                   {pluralize(results.length, 'trip')} {applied.date ? `on ${formatDateLong(applied.date)}` : 'upcoming'}
-                  {!applied.date && results.some((r) => r.trip.scheduleId) ? ' · daily trips show their next departure — pick a travel date to see others' : ''}
+                  {!applied.date && results.some((r) => r.trip.scheduleId) ? ' · repeating trips show their next departure — pick a travel date to see others' : ''}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -181,7 +181,7 @@ export default function TripSearch() {
             ) : (
               <div className="space-y-3">
                 {results.map(({ trip, availability }) => (
-                  <TripCard key={trip.id} trip={trip} availability={availability} />
+                  <TripCard key={trip.id} trip={trip} schedule={trip.scheduleId ? data.schedules.find((s) => s.id === trip.scheduleId) : null} availability={availability} />
                 ))}
               </div>
             )}

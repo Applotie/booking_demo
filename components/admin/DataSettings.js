@@ -15,7 +15,7 @@ const LABELS = {
   routes: 'Routes',
   buses: 'Buses',
   trips: 'Trips',
-  schedules: 'Daily trips',
+  schedules: 'Repeating trips',
   bookings: 'Bookings',
   holds: 'Seat holds',
   expenses: 'Expenses',

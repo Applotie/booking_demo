@@ -27,7 +27,8 @@ Other scripts: `npm run build && npm start` (production), `npm test` (service un
 2. **Buses → Add bus.** Enter a name, an Indian registration number (e.g. `MH 12 AB 1234`) and a bus type. In **Seating layout**, set the capacity and pick an arrangement (`2+1`, `2+2`, `1+1`, `3+2`, or a custom left/right split). Click seats in the preview to block them. Optionally add staff and document expiry dates.
 3. **Trips → Schedule trip.** Choose a **frequency**, an active route and an active bus:
    - **Daily** – set the departure and arrival times and a start date. Passengers can book the trip for any date from the start date on.
-   - **Custom date** – set the departure date and time. The trip runs on that date only.
+   - **Days of week** – pick the days (e.g. Mon, Wed, Fri), the departure and arrival times and a start date. Passengers can book any of those days from the start date on.
+   - **Specific dates** – add one or more dates and set the departure and arrival times. One ordinary trip is saved for each date. If any date clashes with another trip on the bus, nothing is saved and the clashing dates are listed.
 
    The arrival is estimated from the route duration and the fare defaults to the route fare; you can change both. The trip saves a copy of the fare and the seat layout.
 
@@ -54,7 +55,7 @@ Other scripts: `npm run build && npm start` (production), `npm test` (service un
 | Seat layout generation and compatibility checks | `lib/seat-service.js` |
 | Holds, availability, booking, cancellation, payment | `lib/booking-service.js` |
 | Trip scheduling, snapshots, overlap checks, safe cancellation | `lib/trip-service.js` |
-| Daily trips: per-date trip ids, saving a date on first hold, daily overlap checks | `lib/schedule-service.js` |
+| Repeating trips (daily or days of week): per-date trip ids, saving a date on first hold, overlap checks | `lib/schedule-service.js` |
 | Expenses and salaries | `lib/expense-service.js` |
 | Maintenance, linked expenses, reminders | `lib/maintenance-service.js` |
 | Every financial and operational figure | `lib/reporting-service.js` |
@@ -77,20 +78,20 @@ The operating result is **not audited net profit**. It ignores depreciation, fin
 
 **Snapshots:** a trip stores the fare, route details and seat layout it had when it was created. A booking stores its fare and journey details. Changing a route's fare or a bus's layout later therefore never changes existing trips or bookings. **Trips → Apply current bus layout** copies a newer layout onto a trip, but it refuses if any booked seat would be moved, removed or blocked.
 
-**Daily trips** are stored once (in `schedules`), not as one record per day. Each date has a fixed trip id (`<daily trip id>-YYYY-MM-DD`). The first seat hold on a date saves that date as an ordinary trip, so bookings, cancellation, completion and reports work the same as for one-off trips. In **Admin → Trips**:
+**Repeating trips** (Daily and Days of week) are stored once (in `schedules`, with the days they run in `weekdays`), not as one record per day. Each date has a fixed trip id (`<repeating trip id>-YYYY-MM-DD`). The first seat hold on a date saves that date as an ordinary trip, so bookings, cancellation, completion and reports work the same as for one-off trips. In **Admin → Trips**:
 
-- Daily trips are listed in their own card.
-- A date appears in the trips list, marked **Daily**, once someone books it.
-- To skip one date, cancel it there. To stop new dates being offered, pause the daily trip.
-- Editing a daily trip changes every date that has no bookings yet. Dates that already have bookings keep their details.
-- A bus can't be given a trip that overlaps a daily run, and the reverse is also blocked.
+- Repeating trips are listed in their own card.
+- A date appears in the trips list, marked **Daily** or **Weekly**, once someone books it.
+- To skip one date, cancel it there. To stop new dates being offered, pause the repeating trip.
+- Editing a repeating trip (including switching between Daily and Days of week) changes every date that has no bookings yet. Dates that already have bookings keep their details.
+- A bus can't be given a trip that overlaps a repeating run, and the reverse is also blocked.
 
 **History is kept:**
 
-- A route used by a trip or daily trip can't be deleted; deactivate it instead.
+- A route used by a trip or repeating trip can't be deleted; deactivate it instead.
 - A bus with history can't be deleted; set it to Inactive instead.
 - Trips with bookings can't be deleted. Cancelling one requires explicit confirmation, which also cancels its bookings.
-- A daily trip with bookings on any date can't be deleted; pause it instead.
+- A repeating trip with bookings on any date can't be deleted; pause it instead.
 - Cancelled bookings stay in the records.
 
 ## Testing

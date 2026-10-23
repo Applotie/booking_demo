@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { Armchair, Bus, MapPin, Repeat } from 'lucide-react';
-import { formatINR, formatTime, formatDuration, formatDateLong } from '@/lib/formatters';
+import { formatINR, formatTime, formatDuration, formatDateLong, formatWeekdays } from '@/lib/formatters';
+import { runsEveryDay, scheduleWeekdays } from '@/lib/schedule-service';
 import { buttonClasses } from './ui/Button';
 import Badge from './ui/Badge';
 import { tripDurationMinutes } from '@/lib/trip-service';
 import { dateKeyOf } from '@/lib/dates';
 
-export default function TripCard({ trip, availability }) {
+export default function TripCard({ trip, schedule, availability }) {
   const r = trip.routeSnapshot;
   const sameDay = dateKeyOf(trip.departureAt) === dateKeyOf(trip.arrivalAt);
   const seatsLeft = availability.available;
@@ -19,7 +20,7 @@ export default function TripCard({ trip, availability }) {
             <span className="font-medium text-slate-700">{formatDateLong(trip.departureAt)}</span>
             {trip.scheduleId ? (
               <Badge tone="brand" icon={Repeat}>
-                Runs daily
+                {!schedule || runsEveryDay(schedule) ? 'Runs daily' : `Runs ${formatWeekdays(scheduleWeekdays(schedule))}`}
               </Badge>
             ) : null}
             <span className="flex items-center gap-1">
