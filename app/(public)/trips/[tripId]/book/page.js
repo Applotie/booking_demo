@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
 import { createBooking, createHold, getHoldByToken, validateBookingDetails, tripUnavailableReason } from '@/lib/booking-service';
+import { resolveTrip } from '@/lib/schedule-service';
 import { sortSeatIds } from '@/lib/seat-service';
 import { sessionSet, holdKey, flashKey } from '@/lib/session';
 import { normalizeIndianMobile } from '@/lib/validators';
@@ -53,7 +54,7 @@ export default function BookPage() {
     setTokenRead(true);
   }, []);
 
-  const trip = data.trips.find((t) => t.id === tripId);
+  const trip = resolveTrip(tripId, data);
   const hold = token ? getHoldByToken(token, data.holds) : null;
   const booked = hold ? data.bookings.find((b) => b.holdToken === token) : null;
 

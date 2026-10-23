@@ -30,9 +30,9 @@ export default function RoutesPage() {
 
   const tripCounts = useMemo(() => {
     const m = {};
-    data.trips.forEach((t) => (m[t.routeId] = (m[t.routeId] || 0) + 1));
+    [...data.trips, ...data.schedules].forEach((t) => (m[t.routeId] = (m[t.routeId] || 0) + 1));
     return m;
-  }, [data.trips]);
+  }, [data.trips, data.schedules]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();

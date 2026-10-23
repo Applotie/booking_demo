@@ -19,6 +19,7 @@ export default function Badge({ tone = 'neutral', children, className = '', icon
 
 const STATUS_TONES = {
   Active: 'success',
+  Paused: 'warning',
   'Under Maintenance': 'warning',
   Inactive: 'neutral',
   Scheduled: 'info',

@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, TriangleAlert, X, ArrowRight } from 'lucide-react';
+import { ArrowLeft, TriangleAlert, X, ArrowRight, Repeat } from 'lucide-react';
 import SeatMap, { SeatLegend } from '@/components/SeatMap';
 import TripHeader from '@/components/public/TripHeader';
 import Button from '@/components/ui/Button';
+import { inputClasses } from '@/components/ui/Field';
 import { Alert, EmptyState } from '@/components/ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
 import { getSeatAvailability, createHold, getHoldByToken, isHoldActive, tripUnavailableReason } from '@/lib/booking-service';
+import { resolveTrip, occurrenceId } from '@/lib/schedule-service';
 import { sortSeatIds } from '@/lib/seat-service';
 import { sessionGet, sessionSet, holdKey, flashKey } from '@/lib/session';
+import { dateKeyOf, todayKey } from '@/lib/dates';
 import { formatINR } from '@/lib/formatters';
 import { MAX_SEATS_PER_BOOKING } from '@/lib/constants';
 
@@ -26,7 +29,10 @@ export default function TripSeatsPage() {
   const [busy, setBusy] = useState(false);
   const restored = useRef(false);
 
-  const trip = data.trips.find((t) => t.id === tripId);
+  // Dates of a daily trip can be viewed before they are saved; the first
+  // seat hold saves them under this same id.
+  const trip = useMemo(() => resolveTrip(tripId, data), [tripId, data]);
+  const schedule = trip?.scheduleId ? data.schedules.find((s) => s.id === trip.scheduleId && s.status === 'Active') : null;
 
   // Restore this tab's own active hold (e.g. when returning to change seats).
   useEffect(() => {
@@ -77,6 +83,7 @@ export default function TripSeatsPage() {
   }
 
   const unavailable = tripUnavailableReason(trip, now);
+  const firstDate = schedule && (schedule.startDate > todayKey() ? schedule.startDate : todayKey());
   const sorted = sortSeatIds(selected);
   const total = Math.round(trip.fare * selected.length * 100) / 100;
 
@@ -115,6 +122,24 @@ export default function TripSeatsPage() {
         <ArrowLeft size={16} aria-hidden="true" /> All trips
       </Link>
       <TripHeader trip={trip} />
+
+      {schedule ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Repeat size={16} className="text-brand-700" aria-hidden="true" /> This bus runs daily
+          </span>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Travel date
+            <input
+              type="date"
+              min={firstDate}
+              value={dateKeyOf(trip.departureAt)}
+              onChange={(e) => e.target.value >= firstDate && router.push(`/trips/${occurrenceId(schedule.id, e.target.value)}`)}
+              className={inputClasses(false, 'h-9 w-auto')}
+            />
+          </label>
+        </div>
+      ) : null}
 
       {unavailable ? (
         <Alert tone="warning" icon={TriangleAlert} className="mt-4" title="Booking closed">

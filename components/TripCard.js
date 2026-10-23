@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Armchair, Bus, MapPin } from 'lucide-react';
+import { Armchair, Bus, MapPin, Repeat } from 'lucide-react';
 import { formatINR, formatTime, formatDuration, formatDateLong } from '@/lib/formatters';
 import { buttonClasses } from './ui/Button';
+import Badge from './ui/Badge';
 import { tripDurationMinutes } from '@/lib/trip-service';
 import { dateKeyOf } from '@/lib/dates';
 
@@ -16,6 +17,11 @@ export default function TripCard({ trip, availability }) {
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             <span className="font-medium text-slate-700">{formatDateLong(trip.departureAt)}</span>
+            {trip.scheduleId ? (
+              <Badge tone="brand" icon={Repeat}>
+                Runs daily
+              </Badge>
+            ) : null}
             <span className="flex items-center gap-1">
               <Bus size={13} aria-hidden="true" /> {trip.busSnapshot.name} · {trip.busSnapshot.type}
             </span>

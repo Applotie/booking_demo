@@ -8,8 +8,8 @@ import Button from '../ui/Button';
 import { inputClasses } from '../ui/Field';
 import { EmptyState } from '../ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
-import { isTripBookable, getSeatAvailability } from '@/lib/booking-service';
-import { dateKeyOf, todayKey, parseLocalDateTime } from '@/lib/dates';
+import { listBookableTrips, getSeatAvailability } from '@/lib/booking-service';
+import { todayKey, parseLocalDateTime } from '@/lib/dates';
 import { formatDateLong, pluralize } from '@/lib/formatters';
 
 const TIME_SLOTS = [
@@ -31,17 +31,16 @@ export default function TripSearch() {
   const [slot, setSlot] = useState('');
   const [sort, setSort] = useState('departure');
 
-  const bookable = useMemo(() => data.trips.filter((t) => isTripBookable(t, now)), [data.trips, now]);
+  const bookable = useMemo(() => listBookableTrips(data, { now }), [data, now]);
   const cities = useMemo(() => [...new Set(bookable.flatMap((t) => [t.routeSnapshot.source, t.routeSnapshot.destination]))].sort(), [bookable]);
   const busTypes = useMemo(() => [...new Set(bookable.map((t) => t.busSnapshot.type))].sort(), [bookable]);
 
   const results = useMemo(() => {
     const s = TIME_SLOTS.find((x) => x.value === slot);
-    return bookable
+    return (applied.date ? listBookableTrips(data, { date: applied.date, now }) : bookable)
       .filter((t) => {
         if (applied.from && !norm(t.routeSnapshot.source).includes(norm(applied.from))) return false;
         if (applied.to && !norm(t.routeSnapshot.destination).includes(norm(applied.to))) return false;
-        if (applied.date && dateKeyOf(t.departureAt) !== applied.date) return false;
         if (busType && t.busSnapshot.type !== busType) return false;
         if (s?.value) {
           const h = parseLocalDateTime(t.departureAt).getHours();
@@ -148,6 +147,7 @@ export default function TripSearch() {
                 </h2>
                 <p className="text-sm text-slate-500">
                   {pluralize(results.length, 'trip')} {applied.date ? `on ${formatDateLong(applied.date)}` : 'upcoming'}
+                  {!applied.date && results.some((r) => r.trip.scheduleId) ? ' · daily trips show their next departure — pick a travel date to see others' : ''}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

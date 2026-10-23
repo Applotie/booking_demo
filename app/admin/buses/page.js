@@ -41,7 +41,7 @@ export default function BusesPage() {
 
   const deps = deleting ? getBusDependencies(deleting.id, data) : null;
   const hasDeps = deps && deps.trips + deps.expenses + deps.maintenance > 0;
-  const tripCountFor = (id) => data.trips.filter((t) => t.busId === id).length;
+  const tripCountFor = (id) => [...data.trips, ...data.schedules].filter((t) => t.busId === id).length;
 
   const changeStatus = (bus, status) => {
     const res = setBusStatus(bus.id, status);

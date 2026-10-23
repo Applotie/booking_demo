@@ -35,7 +35,7 @@ function GettingStarted({ data }) {
   const steps = [
     { done: data.routes.length > 0, label: 'Create a route', desc: 'Source, destination, stops and default fare.', href: '/admin/routes?new=1' },
     { done: data.buses.length > 0, label: 'Add a bus', desc: 'Registration, seating layout and staff.', href: '/admin/buses?new=1' },
-    { done: data.trips.length > 0, label: 'Schedule a trip', desc: 'Pick a route, bus, date and fare.', href: '/admin/trips?new=1' },
+    { done: data.trips.length > 0 || data.schedules.length > 0, label: 'Schedule a trip', desc: 'Pick a route, bus, frequency and fare.', href: '/admin/trips?new=1' },
     { done: data.bookings.length > 0, label: 'Take a test booking', desc: 'Book a seat on the public site.', href: '/' },
   ];
   if (steps.every((s) => s.done)) return null;
