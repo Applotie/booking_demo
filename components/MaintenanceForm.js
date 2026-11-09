@@ -7,7 +7,9 @@ import Button from './ui/Button';
 import { Input, Select, Textarea, FormError } from './ui/Field';
 import { Alert } from './ui/Misc';
 import { useToast } from './ui/Toast';
-import { createMaintenance, updateMaintenance, defaultCategoryFor } from '@/lib/maintenance-service';
+import { defaultCategoryFor } from '@/lib/maintenance-service';
+import { createMaintenance, updateMaintenance } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { SERVICE_TYPES, MAINTENANCE_EXPENSE_CATEGORIES, EXPENSE_PAYMENT_STATUSES, PAYMENT_METHODS, categoryLabel } from '@/lib/constants';
 import { todayKey } from '@/lib/dates';
 import { formatKm } from '@/lib/formatters';
@@ -36,6 +38,7 @@ export default function MaintenanceForm({ open, record, defaultBusId, data, onCl
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     if (!open) return;
@@ -70,9 +73,9 @@ export default function MaintenanceForm({ open, record, defaultBusId, data, onCl
       return next;
     });
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
-    const result = record ? updateMaintenance(record.id, form) : createMaintenance(form);
+    const result = await (record ? updateMaintenance(record.id, form) : createMaintenance(form));
     if (!result.ok) {
       setErrors(result.errors || {});
       setMessage(result.message);
@@ -84,7 +87,7 @@ export default function MaintenanceForm({ open, record, defaultBusId, data, onCl
         : `Maintenance ${record ? 'updated' : 'recorded'}.`
     );
     onClose(result.record);
-  };
+  });
 
   const hasCost = Number(form.cost) > 0;
 

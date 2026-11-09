@@ -8,7 +8,8 @@ import { Field, Input, Select, FormError, inputClasses } from '../ui/Field';
 import { Alert } from '../ui/Misc';
 import SeatMap from '../SeatMap';
 import { useToast } from '../ui/Toast';
-import { createTrip, createTrips, updateTrip, createSchedule, updateSchedule } from '@/lib/trip-service';
+import { createTrips, updateTrip, createSchedule, updateSchedule } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { activeBookingsForTrip } from '@/lib/booking-service';
 import { scheduleArrivalTime, scheduleFrequency, scheduleWeekdays, runsEveryDay, upcomingRunDates } from '@/lib/schedule-service';
 import { parseLocalDateTime, toLocalDateTime, addMinutes, addDays, addDaysToKey, isDateKey, isLocalDateTime, isTimeOfDay, minutesOfDay, timeFromMinutes, todayKey, toDateKey } from '@/lib/dates';
@@ -36,6 +37,7 @@ export default function TripForm({ open, trip, schedule, data, onClose }) {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   // Daily and Weekly are repeating trips; new Specific dates trips take a list
   // of dates. Both use times of day. Editing a one-off trip uses date-times.
@@ -152,13 +154,13 @@ export default function TripForm({ open, trip, schedule, data, onClose }) {
   };
   const removeDate = (date) => setForm((f) => ({ ...f, dates: f.dates.filter((d) => d !== date) }));
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
     let result;
-    if (schedule) result = updateSchedule(schedule.id, form);
-    else if (trip) result = updateTrip(trip.id, form);
-    else if (repeats) result = createSchedule(form);
-    else result = createTrips(form);
+    if (schedule) result = await updateSchedule(schedule.id, form);
+    else if (trip) result = await updateTrip(trip.id, form);
+    else if (repeats) result = await createSchedule(form);
+    else result = await createTrips(form);
     if (!result.ok) {
       setErrors(result.errors || {});
       setMessage(result.message);
@@ -174,7 +176,7 @@ export default function TripForm({ open, trip, schedule, data, onClose }) {
             : `${pluralize(result.records.length, 'trip')} scheduled.`
     );
     onClose(result.record);
-  };
+  });
 
   // Journey length from times of day; an arrival at or before departure is the next day.
   const dailyMinutes =

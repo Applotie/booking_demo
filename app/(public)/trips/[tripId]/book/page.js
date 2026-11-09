@@ -10,7 +10,8 @@ import BookingSummary from '@/components/BookingSummary';
 import Button from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
-import { createBooking, createHold, getHoldByToken, validateBookingDetails, tripUnavailableReason } from '@/lib/booking-service';
+import { getHoldByToken, validateBookingDetails, tripUnavailableReason } from '@/lib/booking-service';
+import { createBooking, createHold } from '@/lib/api-client';
 import { resolveTrip } from '@/lib/schedule-service';
 import { sortSeatIds } from '@/lib/seat-service';
 import { sessionSet, holdKey, flashKey } from '@/lib/session';
@@ -38,9 +39,9 @@ function Steps({ step }) {
 export default function BookPage() {
   const { tripId } = useParams();
   const router = useRouter();
-  const { ready, data } = useAppData();
-  const now = useNow(1000);
   const [token, setToken] = useState(null);
+  const { ready, data } = useAppData({ scope: 'public', tripId, holdToken: token });
+  const now = useNow(1000);
   const [tokenRead, setTokenRead] = useState(false);
   const [step, setStep] = useState('details');
   const [form, setForm] = useState({ passengers: {}, contactName: '', contactNumber: '' });
@@ -135,8 +136,8 @@ export default function BookPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const rehold = () => {
-    const res = createHold({ tripId, seatIds, replaceToken: token });
+  const rehold = async () => {
+    const res = await createHold({ tripId, seatIds, replaceToken: token });
     if (!res.ok) {
       setSubmitError({ message: res.message, conflict: res.code === 'SEATS_UNAVAILABLE' });
       return;
@@ -148,12 +149,12 @@ export default function BookPage() {
     window.history.replaceState(window.history.state, '', `/trips/${tripId}/book?hold=${encodeURIComponent(next)}`);
   };
 
-  const confirm = () => {
+  const confirm = async () => {
     // Guards against double clicks; createBooking is also idempotent per hold.
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
-    const res = createBooking({ holdToken: token, tripId, seatIds, passengers, contactNumber: form.contactNumber, contactName: form.contactName });
+    const res = await createBooking({ holdToken: token, tripId, seatIds, passengers, contactNumber: form.contactNumber, contactName: form.contactName });
     if (res.ok) {
       sessionSet(holdKey(tripId), null);
       router.push(`/booking/${res.booking.id}`);

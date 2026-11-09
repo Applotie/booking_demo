@@ -22,7 +22,7 @@ import {
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/Badge';
-import { PageHeader, Loading, StatCard, Alert } from '@/components/ui/Misc';
+import { PageHeader, Loading, StatCard } from '@/components/ui/Misc';
 import DateRangeFilter, { resolveRange, describeRange } from '@/components/DateRangeFilter';
 import { BasisSelect } from '@/components/FinancialSummary';
 import ReminderList from '@/components/admin/ReminderList';
@@ -61,7 +61,7 @@ function GettingStarted({ data }) {
 }
 
 export default function DashboardPage() {
-  const { ready, data, issues } = useAppData();
+  const { ready, data } = useAppData();
   const [range, setRange] = useState({ preset: 'month', from: '', to: '' });
   const [basis, setBasis] = useState('confirmed');
   const resolved = resolveRange(range);
@@ -75,7 +75,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Live figures calculated from the records saved in this browser."
+        description="Live figures calculated from the records saved in the database."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" icon={Plus} href="/admin/routes?new=1">
@@ -96,12 +96,6 @@ export default function DashboardPage() {
           </div>
         }
       />
-
-      {issues.length ? (
-        <Alert tone="warning" title="Storage problem detected">
-          Some stored data could not be read and was set aside. Open “Data & storage” in the sidebar for details.
-        </Alert>
-      ) : null}
 
       <GettingStarted data={data} />
 

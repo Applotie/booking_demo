@@ -22,7 +22,7 @@ import FinancialSummary, { BasisSelect } from '@/components/FinancialSummary';
 import DateRangeFilter, { resolveRange, describeRange } from '@/components/DateRangeFilter';
 import { GroupedBars, HorizontalBars } from '@/components/Charts';
 import { useAppData } from '@/lib/hooks/use-app-data';
-import { setBusStatus } from '@/lib/bus-service';
+import { setBusStatus } from '@/lib/api-client';
 import { computeFinancials, tripStats, monthlySeries, categoryRows } from '@/lib/reporting-service';
 import { getReminders, getServiceStatus, getDocumentStatus } from '@/lib/maintenance-service';
 import { isSalaryCategory } from '@/lib/expense-service';
@@ -59,7 +59,7 @@ export default function BusProfilePage() {
 
   if (!ready) return <Loading />;
   if (!bus) {
-    return <EmptyState icon={TriangleAlert} title="Bus not found" description="This bus does not exist in this browser." action={<Button href="/admin/buses" variant="secondary" icon={ArrowLeft}>All buses</Button>} />;
+    return <EmptyState icon={TriangleAlert} title="Bus not found" description="This bus does not exist. It may have been deleted." action={<Button href="/admin/buses" variant="secondary" icon={ArrowLeft}>All buses</Button>} />;
   }
 
   const now = Date.now();
@@ -99,8 +99,8 @@ export default function BusProfilePage() {
             <select
               aria-label="Operational status"
               value={bus.operationalStatus}
-              onChange={(e) => {
-                const res = setBusStatus(bus.id, e.target.value);
+              onChange={async (e) => {
+                const res = await setBusStatus(bus.id, e.target.value);
                 if (res.ok) toast.success(`Status set to ${e.target.value}.`);
               }}
               className={inputClasses(false, 'h-10 w-auto')}

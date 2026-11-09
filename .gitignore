@@ -3,3 +3,8 @@ node_modules
 out
 *.log
 .env*.local
+
+# Local environment (contains secrets)
+.env
+.env.*
+!.env.example

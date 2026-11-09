@@ -5,7 +5,9 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { Input, Select, Textarea, Checkbox, FormError, Field, inputClasses } from './ui/Field';
 import { useToast } from './ui/Toast';
-import { createExpense, updateExpense, isSalaryCategory } from '@/lib/expense-service';
+import { isSalaryCategory } from '@/lib/expense-service';
+import { createExpense, updateExpense } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { getBusStaff } from '@/lib/bus-service';
 import { EXPENSE_CATEGORIES, EXPENSE_GROUPS, EXPENSE_PAYMENT_STATUSES, PAYMENT_METHODS, categoryMeta } from '@/lib/constants';
 import { todayKey, monthKey } from '@/lib/dates';
@@ -34,6 +36,7 @@ export default function ExpenseForm({ open, expense, defaultBusId, data, onClose
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     if (!open) return;
@@ -69,9 +72,9 @@ export default function ExpenseForm({ open, expense, defaultBusId, data, onClose
     });
   };
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
-    const result = expense ? updateExpense(expense.id, form) : createExpense(form);
+    const result = await (expense ? updateExpense(expense.id, form) : createExpense(form));
     if (!result.ok) {
       setErrors(result.errors || {});
       setMessage(result.message);
@@ -79,7 +82,7 @@ export default function ExpenseForm({ open, expense, defaultBusId, data, onClose
     }
     toast.success(expense ? 'Expense updated.' : 'Expense recorded.');
     onClose(result.record);
-  };
+  });
 
   return (
     <Modal

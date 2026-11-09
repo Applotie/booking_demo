@@ -5,7 +5,8 @@ import { Plus, ArrowUp, ArrowDown, Trash2, MapPin } from 'lucide-react';
 import Modal from '../ui/Modal';
 import Button, { IconButton } from '../ui/Button';
 import { Input, Textarea, Checkbox, FormError, inputClasses } from '../ui/Field';
-import { createRoute, updateRoute } from '@/lib/route-service';
+import { createRoute, updateRoute } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { useToast } from '../ui/Toast';
 
 const EMPTY = { name: '', source: '', destination: '', stops: [], defaultFare: '', durationHours: '', durationMinutes: '0', description: '', isActive: true };
@@ -30,6 +31,7 @@ export default function RouteForm({ open, route, onClose }) {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     if (open) {
@@ -51,9 +53,9 @@ export default function RouteForm({ open, route, onClose }) {
     });
   const removeStop = (i) => setForm((f) => ({ ...f, stops: f.stops.filter((_, j) => j !== i) }));
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
-    const result = route ? updateRoute(route.id, form) : createRoute(form);
+    const result = await (route ? updateRoute(route.id, form) : createRoute(form));
     if (!result.ok) {
       setErrors(result.errors || {});
       setMessage(result.message);
@@ -61,7 +63,7 @@ export default function RouteForm({ open, route, onClose }) {
     }
     toast.success(route ? 'Route updated.' : 'Route created.');
     onClose(result.record);
-  };
+  });
 
   return (
     <Modal

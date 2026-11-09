@@ -7,7 +7,8 @@ import Button from '../ui/Button';
 import { Input, Checkbox } from '../ui/Field';
 import { Alert } from '../ui/Misc';
 import { useToast } from '../ui/Toast';
-import { cancelTrip } from '@/lib/trip-service';
+import { cancelTrip } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { activeBookingsForTrip } from '@/lib/booking-service';
 import { formatDateTime, formatINR } from '@/lib/formatters';
 
@@ -17,6 +18,7 @@ export default function CancelTripDialog({ trip, bookings, onClose }) {
   const [reason, setReason] = useState('');
   const [ack, setAck] = useState(false);
   const toast = useToast();
+  const guard = useSingleFlight();
   useEffect(() => {
     setReason('');
     setAck(false);
@@ -26,15 +28,15 @@ export default function CancelTripDialog({ trip, bookings, onClose }) {
   const paid = active.filter((b) => b.paymentStatus === 'Paid');
   const passengers = active.reduce((s, b) => s + b.passengers.length, 0);
 
-  const confirm = () => {
-    const res = cancelTrip(trip.id, { reason, cancelBookings: active.length > 0 && ack });
+  const confirm = guard(async () => {
+    const res = await cancelTrip(trip.id, { reason, cancelBookings: active.length > 0 && ack });
     if (!res.ok) {
       toast.error(res.message);
       return;
     }
     toast.success(res.cancelledBookings ? `Trip cancelled along with ${res.cancelledBookings} booking(s). Cancellation messages are ready to send.` : 'Trip cancelled.');
     onClose(true);
-  };
+  });
 
   return (
     <Modal

@@ -11,7 +11,8 @@ import { inputClasses } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/Toast';
 import BusForm from '@/components/admin/BusForm';
 import { useAppData, useQueryParam } from '@/lib/hooks/use-app-data';
-import { setBusStatus, deleteBus, getBusDependencies } from '@/lib/bus-service';
+import { getBusDependencies } from '@/lib/bus-service';
+import { setBusStatus, deleteBus } from '@/lib/api-client';
 import { getDocumentStatus, getServiceStatus } from '@/lib/maintenance-service';
 import { sellableSeatCount } from '@/lib/seat-service';
 import { BUS_STATUSES } from '@/lib/constants';
@@ -43,8 +44,8 @@ export default function BusesPage() {
   const hasDeps = deps && deps.trips + deps.expenses + deps.maintenance > 0;
   const tripCountFor = (id) => [...data.trips, ...data.schedules].filter((t) => t.busId === id).length;
 
-  const changeStatus = (bus, status) => {
-    const res = setBusStatus(bus.id, status);
+  const changeStatus = async (bus, status) => {
+    const res = await setBusStatus(bus.id, status);
     if (res.ok) toast.success(`${bus.name} is now ${status.toLowerCase()}.`);
     else toast.error(res.message);
   };
@@ -169,10 +170,10 @@ export default function BusesPage() {
         confirmLabel={hasDeps ? 'Set to Inactive' : 'Delete bus'}
         tone={hasDeps ? 'primary' : 'danger'}
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (hasDeps) changeStatus(deleting, 'Inactive');
           else {
-            const res = deleteBus(deleting.id);
+            const res = await deleteBus(deleting.id);
             if (res.ok) toast.success('Bus deleted.');
             else toast.error(res.message);
           }

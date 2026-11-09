@@ -15,7 +15,8 @@ import MaintenanceForm from '@/components/MaintenanceForm';
 import ReminderList from '@/components/admin/ReminderList';
 import DateRangeFilter, { resolveRange, describeRange } from '@/components/DateRangeFilter';
 import { useAppData, useQueryParam } from '@/lib/hooks/use-app-data';
-import { deleteMaintenance, getReminders, getServiceStatus, checkMaintenanceIntegrity, repairMaintenanceLinks } from '@/lib/maintenance-service';
+import { getReminders, getServiceStatus, checkMaintenanceIntegrity } from '@/lib/maintenance-service';
+import { deleteMaintenance, repairMaintenanceLinks } from '@/lib/api-client';
 import { inRange } from '@/lib/dates';
 import { formatINR, formatDate, formatKm } from '@/lib/formatters';
 
@@ -143,9 +144,10 @@ export default function MaintenancePage() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => {
-                    repairMaintenanceLinks();
-                    toast.success('Maintenance expense links repaired.');
+                  onClick={async () => {
+                    const res = await repairMaintenanceLinks();
+                    if (res.ok) toast.success('Maintenance expense links repaired.');
+                    else toast.error(res.message);
                   }}
                 >
                   Repair links
@@ -228,11 +230,12 @@ export default function MaintenancePage() {
         message={deleting ? `${deleting.serviceType} on ${formatDate(deleting.serviceDate)} will be removed${deleting.cost > 0 ? `, together with its linked expense of ${formatINR(deleting.cost)}` : ''}.` : ''}
         confirmLabel="Delete"
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
-          const res = deleteMaintenance(deleting.id);
+        onConfirm={async () => {
+          const target = deleting;
+          setDeleting(null);
+          const res = await deleteMaintenance(target.id);
           if (res.ok) toast.success('Maintenance record deleted.');
           else toast.error(res.message);
-          setDeleting(null);
         }}
       />
     </>

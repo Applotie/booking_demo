@@ -12,7 +12,7 @@ import { inputClasses } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/Toast';
 import RouteForm from '@/components/admin/RouteForm';
 import { useAppData, useQueryParam } from '@/lib/hooks/use-app-data';
-import { setRouteActive, deleteRoute } from '@/lib/route-service';
+import { setRouteActive, deleteRoute } from '@/lib/api-client';
 import { formatINR, formatDuration } from '@/lib/formatters';
 
 export default function RoutesPage() {
@@ -44,8 +44,8 @@ export default function RoutesPage() {
 
   if (!ready) return <Loading />;
 
-  const toggle = (route) => {
-    const res = setRouteActive(route.id, !route.isActive);
+  const toggle = async (route) => {
+    const res = await setRouteActive(route.id, !route.isActive);
     if (res.ok) toast.success(`Route ${res.record.isActive ? 'activated' : 'deactivated'}.`);
     else toast.error(res.message);
   };
@@ -138,11 +138,12 @@ export default function RoutesPage() {
         confirmLabel="Delete route"
         disabled={Boolean(deleting && tripCounts[deleting.id])}
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
-          const res = deleteRoute(deleting.id);
+        onConfirm={async () => {
+          const target = deleting;
+          setDeleting(null);
+          const res = await deleteRoute(target.id);
           if (res.ok) toast.success('Route deleted.');
           else toast.error(res.message);
-          setDeleting(null);
         }}
       />
     </>

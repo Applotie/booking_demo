@@ -16,9 +16,12 @@ import {
   X,
   ExternalLink,
   Database,
+  LogOut,
 } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/constants';
+import { signOutAdmin } from '@/lib/api-client';
 import DataSettings from './DataSettings';
+import LocalDataImport from './LocalDataImport';
 
 const NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -71,8 +74,25 @@ function Brand() {
 }
 
 export default function AdminShell({ children }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  // The sign-in page has no sidebar.
+  if (pathname === '/admin/login') return children;
+
+  const signOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    const ok = await signOutAdmin();
+    if (ok) {
+      window.location.replace('/admin/login?reason=signed-out');
+      return;
+    }
+    setSigningOut(false);
+    window.alert('Could not sign out. Check your connection and try again.');
+  };
 
   const footer = (
     <div className="space-y-0.5 border-t border-white/10 pt-3">
@@ -88,6 +108,14 @@ export default function AdminShell({ children }) {
         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5 hover:text-white"
       >
         <Database size={16} aria-hidden="true" /> Data & storage
+      </button>
+      <button
+        type="button"
+        onClick={signOut}
+        disabled={signingOut}
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5 hover:text-white disabled:opacity-60"
+      >
+        <LogOut size={16} aria-hidden="true" /> {signingOut ? 'Signing out…' : 'Sign out'}
       </button>
     </div>
   );
@@ -130,7 +158,10 @@ export default function AdminShell({ children }) {
         </div>
       ) : null}
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <LocalDataImport />
+        {children}
+      </main>
       <DataSettings open={dataOpen} onClose={() => setDataOpen(false)} />
     </div>
   );

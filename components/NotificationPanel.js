@@ -5,7 +5,8 @@ import { Copy, Check, MessageCircle, Info } from 'lucide-react';
 import Badge from './ui/Badge';
 import Button, { buttonClasses } from './ui/Button';
 import { useToast } from './ui/Toast';
-import { NOTIFICATION_STATUS, NOTIFICATION_TYPES, EVENT_LABELS, whatsappLinkFor, recordWhatsAppOpened, recordMessageCopied } from '@/lib/notifications';
+import { NOTIFICATION_STATUS, NOTIFICATION_TYPES, EVENT_LABELS, whatsappLinkFor } from '@/lib/notifications';
+import { recordWhatsAppOpened, recordMessageCopied } from '@/lib/api-client';
 import { formatDateTime, formatPhone } from '@/lib/formatters';
 
 async function copyText(text) {

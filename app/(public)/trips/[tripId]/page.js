@@ -10,7 +10,8 @@ import Button from '@/components/ui/Button';
 import { inputClasses } from '@/components/ui/Field';
 import { Alert, EmptyState } from '@/components/ui/Misc';
 import { useAppData, useNow } from '@/lib/hooks/use-app-data';
-import { getSeatAvailability, createHold, getHoldByToken, isHoldActive, tripUnavailableReason } from '@/lib/booking-service';
+import { getSeatAvailability, getHoldByToken, isHoldActive, tripUnavailableReason } from '@/lib/booking-service';
+import { createHold } from '@/lib/api-client';
 import { resolveTrip, occurrenceId, runsEveryDay, scheduleWeekdays, upcomingRunDates } from '@/lib/schedule-service';
 import { sortSeatIds } from '@/lib/seat-service';
 import { sessionGet, sessionSet, holdKey, flashKey } from '@/lib/session';
@@ -21,7 +22,7 @@ import { MAX_SEATS_PER_BOOKING } from '@/lib/constants';
 export default function TripSeatsPage() {
   const { tripId } = useParams();
   const router = useRouter();
-  const { ready, data } = useAppData();
+  const { ready, data } = useAppData({ scope: 'public', tripId });
   const now = useNow(1000);
   const [selected, setSelected] = useState([]);
   const [ownToken, setOwnToken] = useState(null);
@@ -77,7 +78,7 @@ export default function TripSeatsPage() {
   if (!trip) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <EmptyState icon={TriangleAlert} title="Trip not found" description="This trip does not exist in this browser. It may have been removed by the operator." action={<Button href="/" variant="secondary" icon={ArrowLeft}>Back to all trips</Button>} />
+        <EmptyState icon={TriangleAlert} title="Trip not found" description="This trip does not exist. It may have been removed by the operator." action={<Button href="/" variant="secondary" icon={ArrowLeft}>Back to all trips</Button>} />
       </div>
     );
   }
@@ -101,10 +102,10 @@ export default function TripSeatsPage() {
     setSelected((s) => [...s, seatId]);
   };
 
-  const proceed = () => {
+  const proceed = async () => {
     if (busy || !selected.length) return;
     setBusy(true);
-    const res = createHold({ tripId, seatIds: selected, replaceToken: ownToken });
+    const res = await createHold({ tripId, seatIds: selected, replaceToken: ownToken });
     if (!res.ok) {
       setBusy(false);
       setNotice(res.message);

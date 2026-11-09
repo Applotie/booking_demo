@@ -16,7 +16,8 @@ import SalaryBatchForm from '@/components/SalaryBatchForm';
 import DateRangeFilter, { resolveRange, describeRange } from '@/components/DateRangeFilter';
 import { HorizontalBars } from '@/components/Charts';
 import { useAppData, useQueryParam } from '@/lib/hooks/use-app-data';
-import { filterExpenses, deleteExpense, setExpensePaymentStatus } from '@/lib/expense-service';
+import { filterExpenses } from '@/lib/expense-service';
+import { deleteExpense, setExpensePaymentStatus } from '@/lib/api-client';
 import { summarizeExpenses, categoryRows } from '@/lib/reporting-service';
 import { monthRange, monthKey } from '@/lib/dates';
 import { formatINR, formatDate, formatMonth } from '@/lib/formatters';
@@ -115,8 +116,8 @@ export default function ExpensesPage() {
         <button
           type="button"
           title={`Mark as ${e.paymentStatus === 'Paid' ? 'Pending' : 'Paid'}`}
-          onClick={() => {
-            const res = setExpensePaymentStatus(e.id, e.paymentStatus === 'Paid' ? 'Pending' : 'Paid');
+          onClick={async () => {
+            const res = await setExpensePaymentStatus(e.id, e.paymentStatus === 'Paid' ? 'Pending' : 'Paid');
             if (res.ok) toast.success(`Marked ${res.record.paymentStatus.toLowerCase()}.`);
           }}
         >
@@ -261,11 +262,12 @@ export default function ExpensesPage() {
         message={deleting ? `${deleting.description} – ${formatINR(deleting.amount)} will be permanently removed and all totals updated.` : ''}
         confirmLabel="Delete"
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
-          const res = deleteExpense(deleting.id);
+        onConfirm={async () => {
+          const target = deleting;
+          setDeleting(null);
+          const res = await deleteExpense(target.id);
           if (res.ok) toast.success('Expense deleted.');
           else toast.error(res.message);
-          setDeleting(null);
         }}
       />
     </>

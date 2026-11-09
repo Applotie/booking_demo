@@ -14,7 +14,8 @@ import { useToast } from '@/components/ui/Toast';
 import TripForm from '@/components/admin/TripForm';
 import CancelTripDialog from '@/components/admin/CancelTripDialog';
 import { useAppData, useQueryParam } from '@/lib/hooks/use-app-data';
-import { setTripStatus, syncTripLayout, deleteTrip, isLayoutOutOfDate, setScheduleStatus, syncScheduleLayout, deleteSchedule } from '@/lib/trip-service';
+import { isLayoutOutOfDate } from '@/lib/trip-service';
+import { setTripStatus, syncTripLayout, deleteTrip, setScheduleStatus, syncScheduleLayout, deleteSchedule } from '@/lib/api-client';
 import { nextBookableTrip } from '@/lib/booking-service';
 import { scheduleArrivalTime, arrivesNextDay, scheduleFrequency, scheduleWeekdays } from '@/lib/schedule-service';
 import { tripStats } from '@/lib/reporting-service';
@@ -80,17 +81,18 @@ export default function TripsPage() {
   const setFilter = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }));
   const today = todayKey();
 
-  const runConfirm = () => {
+  const runConfirm = async () => {
     const { kind, trip, schedule } = confirm;
+    setConfirm(null);
     let res;
-    if (kind === 'complete') res = setTripStatus(trip.id, 'Completed');
-    else if (kind === 'reopen') res = setTripStatus(trip.id, 'Scheduled');
-    else if (kind === 'sync') res = syncTripLayout(trip.id);
-    else if (kind === 'delete') res = deleteTrip(trip.id);
-    else if (kind === 'pause') res = setScheduleStatus(schedule.id, 'Paused');
-    else if (kind === 'resume') res = setScheduleStatus(schedule.id, 'Active');
-    else if (kind === 'syncSchedule') res = syncScheduleLayout(schedule.id);
-    else if (kind === 'deleteSchedule') res = deleteSchedule(schedule.id);
+    if (kind === 'complete') res = await setTripStatus(trip.id, 'Completed');
+    else if (kind === 'reopen') res = await setTripStatus(trip.id, 'Scheduled');
+    else if (kind === 'sync') res = await syncTripLayout(trip.id);
+    else if (kind === 'delete') res = await deleteTrip(trip.id);
+    else if (kind === 'pause') res = await setScheduleStatus(schedule.id, 'Paused');
+    else if (kind === 'resume') res = await setScheduleStatus(schedule.id, 'Active');
+    else if (kind === 'syncSchedule') res = await syncScheduleLayout(schedule.id);
+    else if (kind === 'deleteSchedule') res = await deleteSchedule(schedule.id);
     if (res.ok) {
       toast.success(
         {
@@ -105,7 +107,6 @@ export default function TripsPage() {
         }[kind]
       );
     } else toast.error(res.message);
-    setConfirm(null);
   };
 
   const scheduleColumns = [

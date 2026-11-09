@@ -8,7 +8,8 @@ import { Input, Select, Textarea, FormError, inputClasses } from '../ui/Field';
 import { Alert } from '../ui/Misc';
 import SeatLayoutEditor from '../SeatLayoutEditor';
 import { useToast } from '../ui/Toast';
-import { createBus, updateBus } from '@/lib/bus-service';
+import { createBus, updateBus } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { generateId } from '@/lib/storage';
 import { BUS_TYPES, BUS_STATUSES, DOCUMENT_FIELDS } from '@/lib/constants';
 
@@ -65,6 +66,7 @@ export default function BusForm({ open, bus, onClose, tripCount = 0 }) {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     if (open) {
@@ -79,9 +81,9 @@ export default function BusForm({ open, bus, onClose, tripCount = 0 }) {
   const setDoc = (key) => (e) => setForm((f) => ({ ...f, documents: { ...f.documents, [key]: e.target.value } }));
   const setStaff = (i, field, value) => setForm((f) => ({ ...f, staff: f.staff.map((s, j) => (j === i ? { ...s, [field]: value } : s)) }));
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
-    const result = bus ? updateBus(bus.id, form) : createBus(form);
+    const result = await (bus ? updateBus(bus.id, form) : createBus(form));
     if (!result.ok) {
       setErrors(result.errors || {});
       setMessage(result.message);
@@ -89,7 +91,7 @@ export default function BusForm({ open, bus, onClose, tripCount = 0 }) {
     }
     toast.success(bus ? (result.layoutChanged && tripCount ? 'Bus updated. Existing trips keep their saved seat layout.' : 'Bus updated.') : 'Bus added.');
     onClose(result.record);
-  };
+  });
 
   return (
     <Modal

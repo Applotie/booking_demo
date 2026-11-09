@@ -23,7 +23,7 @@ const TIME_SLOTS = [
 const norm = (s) => String(s || '').trim().toLowerCase();
 
 export default function TripSearch() {
-  const { ready, data } = useAppData();
+  const { ready, data } = useAppData({ scope: 'public' });
   const now = useNow(30000);
   const [query, setQuery] = useState({ from: '', to: '', date: '' });
   const [applied, setApplied] = useState({ from: '', to: '', date: '' });

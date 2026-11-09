@@ -28,7 +28,7 @@ function FindBooking({ open, onClose }) {
     <Modal open={open} onClose={onClose} title="Find your booking" size="sm">
       <form onSubmit={submit} className="space-y-4">
         <Input label="Booking ID" placeholder="e.g. BK7H2KQ9" value={ref} onChange={(e) => { setRef(e.target.value); setError(''); }} error={error} autoComplete="off" />
-        <p className="text-xs text-slate-500">This demo stores bookings in this browser only, so bookings made on another device will not be found here.</p>
+        <p className="text-xs text-slate-500">Enter the booking ID shown on your confirmation.</p>
         <Button type="submit" block icon={Search}>
           Find booking
         </Button>
@@ -66,7 +66,7 @@ export default function PublicShell({ children }) {
             © {BRAND_NAME}. Pay the operator at boarding or by arrangement — no online payment is taken.
           </p>
           <p>
-            Demo app · data stored in this browser ·{' '}
+            Demo app ·{' '}
             <Link href="/admin" className="font-medium text-slate-700 underline-offset-2 hover:underline">
               Operator admin
             </Link>

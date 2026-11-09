@@ -14,7 +14,7 @@ import { BRAND_NAME } from '@/lib/constants';
 
 export default function BookingReceiptPage() {
   const { bookingId } = useParams();
-  const { ready, data } = useAppData();
+  const { ready, data } = useAppData({ scope: 'public', bookingId: decodeURIComponent(bookingId) });
 
   if (!ready) {
     return (
@@ -32,7 +32,7 @@ export default function BookingReceiptPage() {
         <EmptyState
           icon={TriangleAlert}
           title="Booking not found"
-          description="We could not find this booking in this browser. This demo stores bookings locally, so a booking made on another device or browser cannot be opened here."
+          description="We could not find a booking with this ID. Check the booking ID and try again."
           action={<Button href="/" variant="secondary" icon={ArrowLeft}>Back to trips</Button>}
         />
       </div>
@@ -66,7 +66,7 @@ export default function BookingReceiptPage() {
 
       {!cancelled ? (
         <Alert tone="info" className="mt-4">
-          Keep your booking ID. Pay {BRAND_NAME} for this booking later — at boarding or as arranged with the operator. You can reopen this page any time from this browser.
+          Keep your booking ID. Pay {BRAND_NAME} for this booking later — at boarding or as arranged with the operator. You can reopen this page any time with your booking ID.
         </Alert>
       ) : null}
 

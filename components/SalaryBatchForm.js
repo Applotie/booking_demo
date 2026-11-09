@@ -6,7 +6,9 @@ import Modal from './ui/Modal';
 import Button, { IconButton } from './ui/Button';
 import { Input, Select, FormError, inputClasses } from './ui/Field';
 import { useToast } from './ui/Toast';
-import { createMonthlySalaries, findDuplicateSalary } from '@/lib/expense-service';
+import { findDuplicateSalary } from '@/lib/expense-service';
+import { createMonthlySalaries } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { getBusStaff } from '@/lib/bus-service';
 import { EXPENSE_PAYMENT_STATUSES, PAYMENT_METHODS, SALARY_CATEGORIES, categoryLabel } from '@/lib/constants';
 import { todayKey, monthKey } from '@/lib/dates';
@@ -23,6 +25,7 @@ export default function SalaryBatchForm({ open, defaultBusId, data, onClose }) {
   const [rowErrors, setRowErrors] = useState({});
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     if (!open) return;
@@ -44,9 +47,9 @@ export default function SalaryBatchForm({ open, defaultBusId, data, onClose }) {
 
   const setRow = (i, field, value) => setRows((r) => r.map((row, j) => (j === i ? { ...row, [field]: value } : row)));
 
-  const submit = (e) => {
+  const submit = guard(async (e) => {
     e.preventDefault();
-    const res = createMonthlySalaries({ busId, salaryPeriod: period, expenseDate: date, paymentStatus: status, paymentMethod: method, entries: rows });
+    const res = await createMonthlySalaries({ busId, salaryPeriod: period, expenseDate: date, paymentStatus: status, paymentMethod: method, entries: rows });
     if (!res.ok) {
       setRowErrors(res.rowErrors || {});
       setMessage(res.message);
@@ -54,7 +57,7 @@ export default function SalaryBatchForm({ open, defaultBusId, data, onClose }) {
     }
     toast.success(`${res.records.length} salary record(s) saved for ${formatMonth(period)}.`);
     onClose(true);
-  };
+  });
 
   return (
     <Modal

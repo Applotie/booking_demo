@@ -11,7 +11,8 @@ import { Input, Select } from '../ui/Field';
 import BookingSummary from '../BookingSummary';
 import NotificationPanel from '../NotificationPanel';
 import { useToast } from '../ui/Toast';
-import { cancelBooking, setBookingPayment } from '@/lib/booking-service';
+import { cancelBooking, setBookingPayment } from '@/lib/api-client';
+import { useSingleFlight } from '@/lib/hooks/use-single-flight';
 import { getNotificationsForBooking } from '@/lib/notifications';
 import { formatDateTime, formatINR } from '@/lib/formatters';
 import { PAYMENT_METHODS } from '@/lib/constants';
@@ -21,6 +22,7 @@ export default function BookingDetails({ booking, notifications, onClose }) {
   const [method, setMethod] = useState('Cash');
   const [reason, setReason] = useState('');
   const toast = useToast();
+  const guard = useSingleFlight();
 
   useEffect(() => {
     setMode(null);
@@ -32,23 +34,23 @@ export default function BookingDetails({ booking, notifications, onClose }) {
   const list = getNotificationsForBooking(booking.id, notifications);
   const active = booking.bookingStatus === 'Confirmed';
 
-  const markPaid = () => {
-    const res = setBookingPayment(booking.id, 'Paid', { method });
+  const markPaid = guard(async () => {
+    const res = await setBookingPayment(booking.id, 'Paid', { method });
     if (res.ok) toast.success(`${booking.bookingReference} marked as paid (${method}).`);
     else toast.error(res.message);
     setMode(null);
-  };
-  const markUnpaid = () => {
-    const res = setBookingPayment(booking.id, 'Unpaid');
+  });
+  const markUnpaid = guard(async () => {
+    const res = await setBookingPayment(booking.id, 'Unpaid');
     if (res.ok) toast.success(`${booking.bookingReference} marked as unpaid.`);
     else toast.error(res.message);
-  };
-  const cancel = () => {
-    const res = cancelBooking(booking.id, { reason, by: 'operator' });
+  });
+  const cancel = guard(async () => {
+    const res = await cancelBooking(booking.id, { reason });
     if (res.ok) toast.success(`Booking ${booking.bookingReference} cancelled. Seats ${booking.seatIds.join(', ')} are available again.`);
     else toast.error(res.message);
     setMode(null);
-  };
+  });
 
   return (
     <Modal
