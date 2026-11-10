@@ -1,4 +1,4 @@
-# SwiftLine Travels – Bus Booking & Fleet Management
+# Kalika Travels – Bus Booking & Fleet Management
 
 A working Next.js (App Router, JavaScript only) app for a single bus operator:
 

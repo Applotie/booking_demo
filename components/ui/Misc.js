@@ -1,5 +1,7 @@
 // Small presentational building blocks shared across pages.
 
+import { CenteredLoading } from './ActivityIndicator';
+
 export function PageHeader({ title, description, actions, eyebrow }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -88,6 +90,7 @@ export function Tabs({ tabs, active, onChange, className = '' }) {
 export function Loading({ label = 'Loading…' }) {
   return (
     <div className="space-y-3" aria-busy="true" aria-label={label}>
+      <CenteredLoading label={label} />
       <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (

@@ -48,3 +48,19 @@ body {
     background: white;
   }
 }
+
+/* Indeterminate progress bar (components/ui/ActivityIndicator.js) */
+@keyframes activity-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.activity-bar {
+  animation: activity-bar 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-bar {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
+}

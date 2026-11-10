@@ -21,6 +21,7 @@ export default function BookingDetails({ booking, notifications, onClose }) {
   const [mode, setMode] = useState(null); // 'pay' | 'cancel'
   const [method, setMethod] = useState('Cash');
   const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
   const toast = useToast();
   const guard = useSingleFlight();
 
@@ -34,54 +35,100 @@ export default function BookingDetails({ booking, notifications, onClose }) {
   const list = getNotificationsForBooking(booking.id, notifications);
   const active = booking.bookingStatus === 'Confirmed';
 
-  const markPaid = guard(async () => {
+  // Runs one save at a time and keeps the buttons disabled while it is in progress.
+  const run = (fn) =>
+    guard(async () => {
+      setBusy(true);
+      try {
+        await fn();
+      } finally {
+        setBusy(false);
+      }
+    });
+
+  const markPaid = run(async () => {
     const res = await setBookingPayment(booking.id, 'Paid', { method });
-    if (res.ok) toast.success(`${booking.bookingReference} marked as paid (${method}).`);
-    else toast.error(res.message);
-    setMode(null);
+    if (res.ok) {
+      toast.success(`${booking.bookingReference} marked as paid (${method}).`);
+      setMode(null);
+    } else toast.error(res.message);
   });
-  const markUnpaid = guard(async () => {
+  const markUnpaid = run(async () => {
     const res = await setBookingPayment(booking.id, 'Unpaid');
     if (res.ok) toast.success(`${booking.bookingReference} marked as unpaid.`);
     else toast.error(res.message);
   });
-  const cancel = guard(async () => {
+  const cancel = run(async () => {
     const res = await cancelBooking(booking.id, { reason });
-    if (res.ok) toast.success(`Booking ${booking.bookingReference} cancelled. Seats ${booking.seatIds.join(', ')} are available again.`);
-    else toast.error(res.message);
-    setMode(null);
+    if (res.ok) {
+      toast.success(`Booking ${booking.bookingReference} cancelled. Seats ${booking.seatIds.join(', ')} are available again.`);
+      setMode(null);
+      setReason('');
+    } else toast.error(res.message);
   });
 
+  // The confirmation step replaces the footer buttons, so it appears exactly
+  // where the operator clicked, however far the details are scrolled.
+  let footer;
+  if (active && mode === 'pay') {
+    footer = (
+      <div className="w-full rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+        <p className="text-sm font-medium text-emerald-900">Record payment of {formatINR(booking.totalFare)} received from the passenger.</p>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <Select label="Payment method" value={method} onChange={(e) => setMethod(e.target.value)} options={PAYMENT_METHODS} className="w-48" disabled={busy} autoFocus />
+          <Button variant="success" icon={Wallet} onClick={markPaid} disabled={busy}>
+            {busy ? 'Saving…' : 'Confirm payment'}
+          </Button>
+          <Button variant="ghost" onClick={() => setMode(null)} disabled={busy}>
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  } else if (active && mode === 'cancel') {
+    footer = (
+      <div className="w-full rounded-xl border border-red-200 bg-red-50 p-3">
+        <p className="flex items-center gap-2 text-sm font-medium text-red-900">
+          <TriangleAlert size={16} className="shrink-0" aria-hidden="true" /> Cancel this booking? Seats {booking.seatIds.join(', ')} will be released. The record is kept in history.
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <Input label="Reason (optional, shared with passenger)" value={reason} onChange={(e) => setReason(e.target.value)} className="min-w-60 flex-1" maxLength={200} disabled={busy} autoFocus />
+          <Button variant="danger" icon={Ban} onClick={cancel} disabled={busy}>
+            {busy ? 'Cancelling…' : 'Confirm cancellation'}
+          </Button>
+          <Button variant="ghost" onClick={() => setMode(null)} disabled={busy}>
+            Keep booking
+          </Button>
+        </div>
+      </div>
+    );
+  } else {
+    footer = (
+      <>
+        <Link href={`/booking/${booking.id}`} target="_blank" className="mr-auto inline-flex items-center gap-1 self-center text-sm font-medium text-slate-600 hover:text-ink">
+          <ExternalLink size={14} /> Passenger view
+        </Link>
+        {active && booking.paymentStatus !== 'Paid' ? (
+          <Button variant="success" icon={Wallet} onClick={() => setMode('pay')}>
+            Mark paid
+          </Button>
+        ) : null}
+        {active && booking.paymentStatus === 'Paid' ? (
+          <Button variant="secondary" icon={Undo2} onClick={markUnpaid} disabled={busy}>
+            {busy ? 'Saving…' : 'Mark unpaid'}
+          </Button>
+        ) : null}
+        {active ? (
+          <Button variant="danger" icon={Ban} onClick={() => setMode('cancel')} disabled={busy}>
+            Cancel booking
+          </Button>
+        ) : null}
+      </>
+    );
+  }
+
   return (
-    <Modal
-      open
-      onClose={onClose}
-      size="lg"
-      title={`Booking ${booking.bookingReference}`}
-      description={`Booked ${formatDateTime(booking.createdAt)}`}
-      footer={
-        <>
-          <Link href={`/booking/${booking.id}`} target="_blank" className="mr-auto inline-flex items-center gap-1 self-center text-sm font-medium text-slate-600 hover:text-ink">
-            <ExternalLink size={14} /> Passenger view
-          </Link>
-          {active && booking.paymentStatus !== 'Paid' ? (
-            <Button variant="success" icon={Wallet} onClick={() => setMode('pay')}>
-              Mark paid
-            </Button>
-          ) : null}
-          {active && booking.paymentStatus === 'Paid' ? (
-            <Button variant="secondary" icon={Undo2} onClick={markUnpaid}>
-              Mark unpaid
-            </Button>
-          ) : null}
-          {active ? (
-            <Button variant="danger" icon={Ban} onClick={() => setMode('cancel')}>
-              Cancel booking
-            </Button>
-          ) : null}
-        </>
-      }
-    >
+    <Modal open onClose={onClose} size="lg" title={`Booking ${booking.bookingReference}`} description={`Booked ${formatDateTime(booking.createdAt)}`} footer={footer}>
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={booking.bookingStatus} />
@@ -101,38 +148,6 @@ export default function BookingDetails({ booking, notifications, onClose }) {
             {booking.cancellationReason ? ` — ${booking.cancellationReason}` : ''}. Seats were released.
             {booking.paymentStatus === 'Paid' ? ` This booking was paid (${formatINR(booking.totalFare)}); handle any refund outside the app.` : ''}
           </Alert>
-        ) : null}
-
-        {mode === 'pay' ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-            <p className="text-sm font-medium text-emerald-900">Record payment of {formatINR(booking.totalFare)} received from the passenger.</p>
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              <Select label="Payment method" value={method} onChange={(e) => setMethod(e.target.value)} options={PAYMENT_METHODS} className="w-48" />
-              <Button variant="success" onClick={markPaid}>
-                Confirm payment
-              </Button>
-              <Button variant="ghost" onClick={() => setMode(null)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {mode === 'cancel' ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="flex items-center gap-2 text-sm font-medium text-red-900">
-              <TriangleAlert size={16} /> Cancel this booking? Seats {booking.seatIds.join(', ')} will be released. The record is kept in history.
-            </p>
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              <Input label="Reason (optional, shared with passenger)" value={reason} onChange={(e) => setReason(e.target.value)} className="min-w-60 flex-1" />
-              <Button variant="danger" onClick={cancel}>
-                Confirm cancellation
-              </Button>
-              <Button variant="ghost" onClick={() => setMode(null)}>
-                Keep booking
-              </Button>
-            </div>
-          </div>
         ) : null}
 
         <BookingSummary booking={booking} showStatus />

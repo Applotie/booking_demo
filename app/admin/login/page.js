@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
 import { Alert } from '@/components/ui/Misc';
 import { BRAND_NAME } from '@/lib/constants';
+import { withActivity } from '@/lib/activity';
 
 // Only same-site admin paths are accepted as the page to return to.
 function nextPath() {
@@ -41,13 +42,13 @@ export default function AdminLoginPage() {
     setError('');
     setNotice('');
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await withActivity('save', 'Signing in…', () => fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),
         credentials: 'same-origin',
         cache: 'no-store',
-      });
+      }));
       const body = await res.json().catch(() => null);
       if (res.ok && body?.ok) {
         // Full navigation so the new session cookie is used for every request.

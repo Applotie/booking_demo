@@ -18,6 +18,7 @@ import { sessionGet, sessionSet, holdKey, flashKey } from '@/lib/session';
 import { dateKeyOf, todayKey } from '@/lib/dates';
 import { formatINR, formatDateLong, formatWeekdays } from '@/lib/formatters';
 import { MAX_SEATS_PER_BOOKING } from '@/lib/constants';
+import { CenteredLoading } from '@/components/ui/ActivityIndicator';
 
 export default function TripSeatsPage() {
   const { tripId } = useParams();
@@ -69,6 +70,7 @@ export default function TripSeatsPage() {
   if (!ready) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6" aria-busy="true">
+        <CenteredLoading label="Loading seats…" />
         <div className="h-28 animate-pulse rounded-xl bg-slate-200/70" />
         <div className="mt-4 h-96 animate-pulse rounded-xl bg-slate-200/70" />
       </div>

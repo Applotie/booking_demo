@@ -11,6 +11,7 @@ import { findBooking } from '@/lib/booking-service';
 import { getNotificationsForBooking } from '@/lib/notifications';
 import { formatDateTime } from '@/lib/formatters';
 import { BRAND_NAME } from '@/lib/constants';
+import { CenteredLoading } from '@/components/ui/ActivityIndicator';
 
 export default function BookingReceiptPage() {
   const { bookingId } = useParams();
@@ -19,6 +20,7 @@ export default function BookingReceiptPage() {
   if (!ready) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6" aria-busy="true">
+        <CenteredLoading label="Loading your booking…" />
         <div className="h-32 animate-pulse rounded-xl bg-slate-200/70" />
         <div className="mt-4 h-96 animate-pulse rounded-xl bg-slate-200/70" />
       </div>

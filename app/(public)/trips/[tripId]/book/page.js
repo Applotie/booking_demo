@@ -18,6 +18,7 @@ import { sessionSet, holdKey, flashKey } from '@/lib/session';
 import { normalizeIndianMobile } from '@/lib/validators';
 import { formatCountdown, formatINR } from '@/lib/formatters';
 import { dateKeyOf, timeOf } from '@/lib/dates';
+import { CenteredLoading } from '@/components/ui/ActivityIndicator';
 
 function Steps({ step }) {
   const items = ['Select seats', 'Passenger details', 'Review & confirm'];
@@ -67,6 +68,7 @@ export default function BookPage() {
   if (!ready || !tokenRead) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6" aria-busy="true">
+        <CenteredLoading label="Loading your seat selection…" />
         <div className="h-28 animate-pulse rounded-xl bg-slate-200/70" />
         <div className="mt-4 h-96 animate-pulse rounded-xl bg-slate-200/70" />
       </div>

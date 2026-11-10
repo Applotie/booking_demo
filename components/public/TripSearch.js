@@ -11,6 +11,7 @@ import { useAppData, useNow } from '@/lib/hooks/use-app-data';
 import { listBookableTrips, getSeatAvailability } from '@/lib/booking-service';
 import { todayKey, parseLocalDateTime } from '@/lib/dates';
 import { formatDateLong, pluralize } from '@/lib/formatters';
+import { CenteredLoading } from '@/components/ui/ActivityIndicator';
 
 const TIME_SLOTS = [
   { value: '', label: 'Any time' },
@@ -123,6 +124,7 @@ export default function TripSearch() {
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {!ready ? (
           <div className="space-y-3" aria-busy="true">
+            <CenteredLoading label="Loading trips…" />
             {[0, 1, 2].map((i) => (
               <div key={i} className="h-36 animate-pulse rounded-xl bg-slate-200/70" />
             ))}
